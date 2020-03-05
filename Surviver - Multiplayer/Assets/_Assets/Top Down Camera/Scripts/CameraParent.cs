@@ -23,6 +23,10 @@ public class CameraParent : MonoBehaviour {
 
     void Start()
     {
+        if (!target) {
+            Destroy(this.gameObject);
+            return;
+        }
         transform.position = new Vector3(target.position.x, target.position.y + cam.yTargetOffset, target.position.z);
         gameObject.AddComponent<ScreenShake>();
     }

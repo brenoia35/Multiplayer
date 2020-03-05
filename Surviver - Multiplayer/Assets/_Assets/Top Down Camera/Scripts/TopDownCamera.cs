@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
 
 public class TopDownCamera : MonoBehaviour
 {
@@ -46,6 +47,13 @@ public class TopDownCamera : MonoBehaviour
     void Start()
     {
         //Init variables
+        if (!GetComponent<PhotonView>().IsMine) {
+            if (GetComponentInParent<CameraParent>()) {
+                GameObject gm = GetComponentInParent<CameraParent>().gameObject;
+                Destroy(gm);
+            }
+            Destroy(this.gameObject);
+        }
         targetZoom = (zoomMax + zoomMin) / 2;
         controller = new GameObject().AddComponent<CameraParent>();
         controller.target = target;
@@ -59,8 +67,12 @@ public class TopDownCamera : MonoBehaviour
     
     void LateUpdate()
     {
+        if (!target)
+        {
+            return;
+        }
         //Fade Obstructions
-        if(fadeOutObstructions)
+        if (fadeOutObstructions)
             FadeObstructions();
 
         //Screen Shake Test
