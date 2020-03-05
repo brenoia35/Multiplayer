@@ -109,14 +109,14 @@ MonoBehaviour:
   yRotOffset: 0
   enableUserRotation: 1
   rotationSpeed: 5
-  hideCursorOnRotate: 1
+  hideCursorOnRotate: 0
   zoomEnabled: 1
   zoomMin: 15
   zoomMax: 60
   zoomSpeed: 3
-  panningEnabled: 1
+  panningEnabled: 0
   panSpeed: 30
-  hideCursorOnPan: 1
+  hideCursorOnPan: 0
   fadeOutObstructions: 1
   fadeSpeed: 3
   targetFadeAlpha: 0.3

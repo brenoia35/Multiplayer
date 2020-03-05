@@ -76,8 +76,8 @@ public class TopDownCamera : MonoBehaviour
             FadeObstructions();
 
         //Screen Shake Test
-        if (Input.GetKeyDown(KeyCode.P))
-            ShakeScreen();
+        //if (Input.GetKeyDown(KeyCode.P))
+        //    ShakeScreen();
 
         //Update camera position      
         transform.localPosition = new Vector3(0, height, - depth);

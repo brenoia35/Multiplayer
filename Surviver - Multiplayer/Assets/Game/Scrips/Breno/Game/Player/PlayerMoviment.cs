@@ -22,7 +22,7 @@ namespace Survivor.Sistema {
         [SerializeField]
         private Transform EyesPlayer;
 
-        public Transform test;
+        public Transform ikLook;
 
         [Header("Configuration Rotation Mesh")]
         [SerializeField]
@@ -33,6 +33,7 @@ namespace Survivor.Sistema {
         Camera cam;
         private Vector3 moveDirection = Vector3.zero;
         Vector3 rotationToPos = Vector3.zero;
+        bool Mire;
 
         private void Start()
         {
@@ -55,6 +56,7 @@ namespace Survivor.Sistema {
         {
             if (!photonV.IsMine) return;
             CheckMouse();
+            CheckFire();
             CheckMoviment();
         }
 
@@ -104,6 +106,9 @@ namespace Survivor.Sistema {
             if (Physics.Raycast(ray, out hit)){
                 rotationToPos = hit.point;
                 rotationToPos.y = transform.position.y;
+                if (Mire) {
+                    ikLook.transform.position = hit.point;
+                }
             }
             if (rotationToPos != Vector3.zero) {
                 transform.rotation = Quaternion.Slerp(transform.rotation, 
@@ -112,17 +117,48 @@ namespace Survivor.Sistema {
             }
         }
 
-        //private void OnAnimatorIK(int layerIndex)
-        //{
-        //    if (anim)
-        //    {
-        //        //anim.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
+        float timeup;
+        void CheckFire() {
+            if (Input.GetKey(KeyCode.Mouse1))
+            {
+                Mire = true;
+            }
+            else {
+                Mire = false;
+            }
 
-        //        //
-        //        //anim.SetIKPosition(AvatarIKGoal.RightHand, test.position);
-        //        Transform t = anim.GetBoneTransform(HumanBodyBones.Spine);
-        //        t.LookAt(EyesPlayer);
-        //    }
-        //}
+            if (Mire)
+            {
+                timeup = Mathf.Lerp(timeup, 1, 2.5f * Time.deltaTime);
+                anim.SetLayerWeight(1, timeup);
+            }
+            else {
+                timeup = Mathf.Lerp(timeup, 0, 2.5f * Time.deltaTime);
+                anim.SetLayerWeight(1, timeup);
+            }
+            OnAnimatorIK(1);
+        }
+
+        bool reseted;
+        private void OnAnimatorIK(int layerIndex)
+        {
+            if (anim && Mire)
+            {
+                anim.SetIKPositionWeight(AvatarIKGoal.RightHand, timeup);
+                reseted = false;
+                //
+                anim.SetIKPosition(AvatarIKGoal.RightHand, ikLook.position);
+            }
+            else {
+                anim.SetIKPositionWeight(AvatarIKGoal.RightHand, timeup);
+            }
+        }
+
+        void ResetIk() {
+            if (!reseted) {
+                ikLook.transform.position = this.transform.position;
+                reseted = true;
+            }
+        }
     }
 }

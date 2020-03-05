@@ -85,29 +85,29 @@ public class CameraParent : MonoBehaviour {
             if (!trackPlayer)
                 transform.position = Vector3.Lerp(transform.position, panHelper.transform.position, Time.deltaTime * 8);
 
-            if (Input.GetMouseButtonDown(2))
-            {
-                if (trackPlayer)
-                    trackPlayer = false;
+            //if (Input.GetMouseButtonDown(2))
+            //{
+            //    if (trackPlayer)
+            //        trackPlayer = false;
 
-                lastRot = transform.position;
+            //    lastRot = transform.position;
 
-                if(cam.hideCursorOnPan)
-                    Cursor.visible = false;
+            //    if(cam.hideCursorOnPan)
+            //        Cursor.visible = false;
 
-                if (panHelper == null)
-                {
-                    panHelper = new GameObject();
-                    panHelper.transform.position = transform.position;
-                    panHelper.AddComponent<PanHelperScript>();
+            //    if (panHelper == null)
+            //    {
+            //        panHelper = new GameObject();
+            //        panHelper.transform.position = transform.position;
+            //        panHelper.AddComponent<PanHelperScript>();
 
-                    PanHelperScript helper = panHelper.GetComponent<PanHelperScript>();
-                    helper.cam = cam.GetComponent<Camera>();
-                    helper.rotY = transform.rotation.eulerAngles.y;
-                    helper.dragSpeed = panSpeed;
-                }
+            //        PanHelperScript helper = panHelper.GetComponent<PanHelperScript>();
+            //        helper.cam = cam.GetComponent<Camera>();
+            //        helper.rotY = transform.rotation.eulerAngles.y;
+            //        helper.dragSpeed = panSpeed;
+            //    }
 
-            }
+            //}
 
             if (Input.GetMouseButtonDown(1))
             {
@@ -116,12 +116,12 @@ public class CameraParent : MonoBehaviour {
                 Destroy(panHelper);
             }
 
-            if (Input.GetMouseButtonUp(2) && cam.hideCursorOnPan)
-                Cursor.visible = true;
+            //if (Input.GetMouseButtonUp(2) && cam.hideCursorOnPan)
+            //    Cursor.visible = true;
 
             if (returning)
             {
-                smoothTime = 30;
+                //smoothTime = 30;
 
                 if (Vector3.Distance(transform.position, new Vector3(target.position.x, target.position.y + yTargetOffset, target.position.z)) < .01f)
                     returning = false;
