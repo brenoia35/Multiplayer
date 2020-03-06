@@ -11,7 +11,7 @@ namespace Survivor.Sistema {
     {
         [Header("Configuration Player")]
         [SerializeField]
-        private float SpeedMove = 3, speedRun = 5;
+        private float SpeedMove = 3, speedRun = 5, gravity = -12;
         [SerializeField]
         private float SmoothRotation = 3.5f;
         public CharacterController CharacterSc;
@@ -21,19 +21,20 @@ namespace Survivor.Sistema {
         private GameObject Camera;
         [SerializeField]
         private Transform EyesPlayer;
+        public float speedSmoothTime = 0.1f;
 
-        public Transform ikLook;
-
-        [Header("Configuration Rotation Mesh")]
-        [SerializeField]
-        private Transform TorcoMesh;
+        [Space(20), Header("Anim Ik")]
+        public AnimationIk Ik;
+        float speedSmoothVelocity;
 
         //
         PhotonView photonV;
         Camera cam;
         private Vector3 moveDirection = Vector3.zero;
         Vector3 rotationToPos = Vector3.zero;
-        bool Mire;
+
+        float currentSpeed, velocityY;
+        public Vector2 inputDir { get; private set; }
 
         private void Start()
         {
@@ -56,48 +57,56 @@ namespace Survivor.Sistema {
         {
             if (!photonV.IsMine) return;
             CheckMouse();
-            CheckFire();
-            CheckMoviment();
+            Inputs();
         }
 
-        void CheckMoviment() {
-            float v = Input.GetAxis("Vertical");
-            float h = Input.GetAxis("Horizontal");
-            float tempAngle = Mathf.Atan2(v, h);
-            h *= Mathf.Abs(Mathf.Cos(tempAngle));
-            v *= Mathf.Abs(Mathf.Sin(tempAngle));
-            moveDirection = new Vector3(h, 0, v);
-            moveDirection = transform.TransformDirection(moveDirection);
-            if (Input.GetKey(KeyCode.LeftShift))
+        void Inputs() {
+            Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            inputDir = input.normalized;
+            bool running = Input.GetKey(KeyCode.LeftShift);
+            //if (Pb.isDead) return;
+            Move(inputDir, running);
+            float animationSpeedPercent = ((running) ? currentSpeed / speedRun : currentSpeed / SpeedMove * .5f);
+            if (inputDir.y > 0)
             {
-                moveDirection *= speedRun;
-                if (v > 0)
-                {
-                    anim.SetFloat("Speed", 1);
-                }
-                else {
-                    anim.SetFloat("Speed", -1);
-                }
+                anim.SetFloat("Speed", animationSpeedPercent, speedSmoothTime, Time.deltaTime);
             }
             else {
-                moveDirection *= SpeedMove;
-                if (v > 0)
-                {
-                    anim.SetFloat("Speed", 0.5f);
-                }
-                else {
-                    anim.SetFloat("Speed", -0.5f);
-                }
+                anim.SetFloat("Speed", -animationSpeedPercent, speedSmoothTime, Time.deltaTime);
             }
+        }
 
-            if (moveDirection != Vector3.zero)
+        void Move(Vector2 inputDir, bool running)
+        {
+
+            float targetSpeed = ((running) ? speedRun : SpeedMove) * inputDir.magnitude;
+            currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, GetModifiedSmoothTime(speedSmoothTime));
+
+            velocityY += Time.deltaTime * gravity;
+            Vector3 velocity;
+            if (inputDir.y > 0)
             {
-                CharacterSc.Move(moveDirection * Time.deltaTime);
+                velocity = transform.forward * currentSpeed + Vector3.up * velocityY;
             }
             else {
-                anim.SetFloat("Speed", 0);
+                velocity = (-transform.forward) * currentSpeed + Vector3.up * velocityY;
             }
-            
+            CharacterSc.Move(velocity * Time.deltaTime);
+            currentSpeed = new Vector2(CharacterSc.velocity.x, CharacterSc.velocity.z).magnitude;
+
+            if (CharacterSc.isGrounded)
+            {
+                velocityY = 0;
+            }
+        }
+
+        float GetModifiedSmoothTime(float smoothTime)
+        {
+            if (CharacterSc.isGrounded)
+            {
+                return smoothTime;
+            }
+            return smoothTime / 2;
         }
 
         void CheckMouse() {
@@ -106,58 +115,12 @@ namespace Survivor.Sistema {
             if (Physics.Raycast(ray, out hit)){
                 rotationToPos = hit.point;
                 rotationToPos.y = transform.position.y;
-                if (Mire) {
-                    ikLook.transform.position = hit.point;
-                }
             }
             if (rotationToPos != Vector3.zero) {
                 transform.rotation = Quaternion.Slerp(transform.rotation, 
                                                         Quaternion.LookRotation(rotationToPos - transform.position), 
                                                         SmoothRotation * Time.deltaTime);
-            }
-        }
-
-        float timeup;
-        void CheckFire() {
-            if (Input.GetKey(KeyCode.Mouse1))
-            {
-                Mire = true;
-            }
-            else {
-                Mire = false;
-            }
-
-            if (Mire)
-            {
-                timeup = Mathf.Lerp(timeup, 1, 2.5f * Time.deltaTime);
-                anim.SetLayerWeight(1, timeup);
-            }
-            else {
-                timeup = Mathf.Lerp(timeup, 0, 2.5f * Time.deltaTime);
-                anim.SetLayerWeight(1, timeup);
-            }
-            OnAnimatorIK(1);
-        }
-
-        bool reseted;
-        private void OnAnimatorIK(int layerIndex)
-        {
-            if (anim && Mire)
-            {
-                anim.SetIKPositionWeight(AvatarIKGoal.RightHand, timeup);
-                reseted = false;
-                //
-                anim.SetIKPosition(AvatarIKGoal.RightHand, ikLook.position);
-            }
-            else {
-                anim.SetIKPositionWeight(AvatarIKGoal.RightHand, timeup);
-            }
-        }
-
-        void ResetIk() {
-            if (!reseted) {
-                ikLook.transform.position = this.transform.position;
-                reseted = true;
+                Ik.Look(hit.point);
             }
         }
     }
